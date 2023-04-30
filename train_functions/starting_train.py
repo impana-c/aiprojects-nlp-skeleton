@@ -1,3 +1,4 @@
+import tensorflow as tf
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -31,21 +32,28 @@ def starting_train(train_dataset, val_dataset, model, hyperparameters, n_eval):
     optimizer = optim.Adam(model.parameters())
     loss_fn = nn.CrossEntropyLoss()
 
+    train_losses = []
     step = 0
     for epoch in range(epochs):
         print(f"Epoch {epoch + 1} of {epochs}")
+        losses = []
 
         # Loop over each batch in the dataset
-        for batch in tqdm(train_loader):
+        for inputs, targets in tqdm(train_loader):
+            model.zero_grad()
             # TODO: Forward propagate
-
+            outputs = model(inputs)
+            loss = criterion(outputs.squeeze(), targets) #targets.float?
             # TODO: Backpropagation and gradient descent
-
+            loss.backward()
+            optimizer.step()
+            
             # Periodically evaluate our model + log to Tensorboard
             if step % n_eval == 0:
                 # TODO:
-                # Compute training loss and accuracy.
+                train_loss_value = sum(train_losses)/len(train_losses)# Compute training loss and accuracy.
                 # Log the results to Tensorboard.
+                tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 
                 # TODO:
                 # Compute validation loss and accuracy.
@@ -53,8 +61,11 @@ def starting_train(train_dataset, val_dataset, model, hyperparameters, n_eval):
                 # Don't forget to turn off gradient calculations!
                 evaluate(val_loader, model, loss_fn)
 
+            losses.append(loss.item())
             step += 1
 
+        epoch_loss = sum(losses)/step
+        train_losses.append(loss.item())
         print()
 
 
@@ -81,4 +92,10 @@ def evaluate(val_loader, model, loss_fn):
 
     TODO!
     """
+    total_loss = 0.0
+    for inputs, targets in tqdm(val_loader):
+        outputs = model(inputs)
+        loss = loss_fn(inputs, targets)
+        total_loss += loss/outputs.len
+
     pass
