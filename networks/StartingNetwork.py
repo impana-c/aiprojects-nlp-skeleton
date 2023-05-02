@@ -17,7 +17,6 @@ class StartingNetwork(torch.nn.Module):
     def forward(self, x):
         '''
         x (tensor): the input to the model
-        ---Sparsh's test change is here---
         '''
         x = self.fc1(x)
         x = self.fc2(x)
