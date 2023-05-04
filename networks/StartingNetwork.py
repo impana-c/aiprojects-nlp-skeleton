@@ -8,7 +8,7 @@ class StartingNetwork(torch.nn.Module):
     def __init__(self, modelSize):
         super().__init__()
         self.fc1 = nn.Linear(modelSize, 50) # What could that number mean!?!?!? Ask an officer to find out :)
-        self.fc2 = nn.Linear(50, 10)
+        self.fc2 = nn.Linear(50, 2)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
@@ -16,6 +16,6 @@ class StartingNetwork(torch.nn.Module):
             x (tensor): the input to the model
         '''
         x = self.fc1(x)
-        x = self.fc2(x)
+         x = self.fc2(x)
         x = self.sigmoid(x)
         return x
