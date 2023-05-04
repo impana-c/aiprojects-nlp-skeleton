@@ -20,9 +20,9 @@ def starting_train(train_dataset, val_dataset, model, hyperparameters, n_eval):
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader   = torch.utils.data.DataLoader(val_dataset,   batch_size=batch_size, shuffle=True)
     
-    optimizer = optim.Adam(model.parameters())
+    modelQualityTracker = {"Training Losses Per Epoch":[], "ValidationInformation":[], "Accuracies":[]}
     loss_fn = nn.CrossEntropyLoss()
-    modelQualityTracker = {"Training Losses Per Epoch":[], "ValidationInformation":[]}
+    optimizer = optim.Adam(model.parameters())
 
     #Extraneous lines of code I don't want to get rid of yet: train_losses = []; step = 0;
     
@@ -30,13 +30,15 @@ def starting_train(train_dataset, val_dataset, model, hyperparameters, n_eval):
         print(f"Epoch {epoch + 1} of {epochs}")
         for batchInputs, batchLabels in tqdm(train_loader): #what does tdqm stand for?
             optimizer.zero_grad()
-            lossForCurrentBatch = loss_fn(model(batchInputs).squeeze(), batchLabels)
+            modelPredictionsForLabels = model(batchInputs).squeeze()
+            lossForCurrentBatch = loss_fn(modelPredictionsForLabels, batchLabels)
             lossForCurrentBatch.backward()
             optimizer.step()
             modelQualityTracker["Training Losses Per Epoch"].append(lossForCurrentBatch.data.item())
             #Evaluate our model and log to Tensorboard (see past version for template code for doing this)
-    modelQualityTracker["Average Loss for Each Epoch"] = ([sum(i)/len(i)
-                                                           for i in modelQualityTracker["Training Losses Per Epoch"]])
+    
+    modelQualityTracker["Average Loss for Each Epoch"] = ([sum(i)/len(i) for i in modelQualityTracker["Training Losses Per Epoch"]])
+    modelQualityTracker["Accuracies"].append(compute_accuracy(modelPredictionsForLabels, batchLabels))
 
 def compute_accuracy(outputs, labels):
     """
