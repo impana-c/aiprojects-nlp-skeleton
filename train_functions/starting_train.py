@@ -4,7 +4,6 @@ import torch.nn as nn
 import torch.optim as optim
 from tqdm import tqdm
 
-
 def starting_train(train_dataset, val_dataset, model, hyperparameters, n_eval):
     """
     Trains and evaluates a model.
@@ -16,58 +15,35 @@ def starting_train(train_dataset, val_dataset, model, hyperparameters, n_eval):
         hyperparameters: Dictionary containing hyperparameters.
         n_eval:          Interval at which we evaluate our model.
     """
-
-    # Get keyword arguments
     batch_size, epochs = hyperparameters["batch_size"], hyperparameters["epochs"]
 
-    # Initialize dataloaders
-    train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=batch_size, shuffle=True
-    )
-    val_loader = torch.utils.data.DataLoader(
-        val_dataset, batch_size=batch_size, shuffle=True
-    )
-
-    # Initalize optimizer (for gradient descent) and loss function
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader   = torch.utils.data.DataLoader(val_dataset,   batch_size=batch_size, shuffle=True)
+    
+    modelQualityTracker = {"Training Losses Per Epoch":[], "ValidationInformation":[], "Accuracies":[]}
+    loss_fn = nn.BCELoss()
     optimizer = optim.Adam(model.parameters())
-    loss_fn = nn.CrossEntropyLoss()
 
-    train_losses = []
-    step = 0
+    #Extraneous lines of code I don't want to get rid of yet: train_losses = []; step = 0;
+    
     for epoch in range(epochs):
+        allLossesForEpoch = []
+        accuraciesForEpoch = []
         print(f"Epoch {epoch + 1} of {epochs}")
-        losses = []
-
-        # Loop over each batch in the dataset
-        for inputs, targets in tqdm(train_loader):
-            model.zero_grad()
-            # TODO: Forward propagate
-            outputs = model(inputs)
-            loss = criterion(outputs.squeeze(), targets) #targets.float?
-            # TODO: Backpropagation and gradient descent
-            loss.backward()
+        for batchInputs, batchLabels in tqdm(train_loader): #what does tdqm stand for?
+            optimizer.zero_grad()
+            modelPredictionsForLabels = model(batchInputs).squeeze()
+            lossForCurrentBatch = loss_fn(modelPredictionsForLabels, batchLabels.float())
+            lossForCurrentBatch.backward()
             optimizer.step()
-            
-            # Periodically evaluate our model + log to Tensorboard
-            if step % n_eval == 0:
-                # TODO:
-                train_loss_value = sum(train_losses)/len(train_losses)# Compute training loss and accuracy.
-                # Log the results to Tensorboard.
-                tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
-
-                # TODO:
-                # Compute validation loss and accuracy.
-                # Log the results to Tensorboard. 
-                # Don't forget to turn off gradient calculations!
-                evaluate(val_loader, model, loss_fn)
-
-            losses.append(loss.item())
-            step += 1
-
-        epoch_loss = sum(losses)/step
-        train_losses.append(loss.item())
-        print()
-
+            allLossesForEpoch.append(lossForCurrentBatch.data.item())
+            accuraciesForEpoch.append(compute_accuracy(modelPredictionsForLabels, batchLabels))
+        modelQualityTracker["Training Losses Per Epoch"].append(allLossesForEpoch)
+        modelQualityTracker["Accuracies"].append(accuraciesForEpoch)
+        #Evaluate our model and log to Tensorboard (see past version for template code for doing this)
+    
+    modelQualityTracker["Average Loss for Each Epoch"] = ([sum(i)/len(i) for i in modelQualityTracker["Training Losses Per Epoch"]])
+    return modelQualityTracker
 
 def compute_accuracy(outputs, labels):
     """
