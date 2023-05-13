@@ -27,6 +27,8 @@ def starting_train(train_dataset, val_dataset, model, hyperparameters, n_eval):
     #Extraneous lines of code I don't want to get rid of yet: train_losses = []; step = 0;
     
     for epoch in range(epochs):
+        allLossesForEpoch = []
+        accuraciesForEpoch = []
         print(f"Epoch {epoch + 1} of {epochs}")
         for batchInputs, batchLabels in tqdm(train_loader): #what does tdqm stand for?
             optimizer.zero_grad()
@@ -34,11 +36,13 @@ def starting_train(train_dataset, val_dataset, model, hyperparameters, n_eval):
             lossForCurrentBatch = loss_fn(modelPredictionsForLabels, batchLabels)
             lossForCurrentBatch.backward()
             optimizer.step()
-            modelQualityTracker["Training Losses Per Epoch"].append(lossForCurrentBatch.data.item())
+            allLossesForEpoch.append(lossForCurrentBatch.data.item())
+            accuraciesForEpoch.append(compute_accuracy(modelPredictionsForLabels, batchLabels))
+        modelQualityTracker["Training Losses Per Epoch"].append(allLossesForEpoch)
+        modelQualityTracker["Accuracies"].append(accuraciesForEpoch)
         #Evaluate our model and log to Tensorboard (see past version for template code for doing this)
     
     modelQualityTracker["Average Loss for Each Epoch"] = ([sum(i)/len(i) for i in modelQualityTracker["Training Losses Per Epoch"]])
-    modelQualityTracker["Accuracies"].append(compute_accuracy(modelPredictionsForLabels, batchLabels))
     return modelQualityTracker
 
 def compute_accuracy(outputs, labels):

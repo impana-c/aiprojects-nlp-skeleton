@@ -16,6 +16,6 @@ class StartingNetwork(torch.nn.Module):
             x (tensor): the input to the model
         '''
         x = self.fc1(x)
-         x = self.fc2(x)
+        x = self.fc2(x)
         x = self.sigmoid(x)
         return x
