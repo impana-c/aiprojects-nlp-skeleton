@@ -39,6 +39,9 @@ def starting_train(train_dataset, val_dataset, model, hyperparameters, n_eval):
             allLossesForEpoch.append(lossForCurrentBatch.data.item())
             accuraciesForEpoch.append(compute_accuracy(modelPredictionsForLabels, batchLabels))
         modelQualityTracker["Training Losses Per Epoch"].append(allLossesForEpoch)
+        print("Average Loss:", sum(allLossesForEpoch)/len(allLossesForEpoch))
+        print("Average Accuracy:", sum(accuraciesForEpoch)/len(accuraciesForEpoch))
+        print("\t ")
         modelQualityTracker["Accuracies"].append(accuraciesForEpoch)
         #Evaluate our model and log to Tensorboard (see past version for template code for doing this)
     
